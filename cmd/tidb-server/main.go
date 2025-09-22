@@ -11,7 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
+/**
+tidb server入口。
+*/
 package main
 
 import (
@@ -277,6 +279,10 @@ func initFlagSet() *flag.FlagSet {
 	return fset
 }
 
+/*
+*
+tidb server入口程序。
+*/
 func main() {
 	fset := initFlagSet()
 	if args := fset.Args(); len(args) != 0 {
