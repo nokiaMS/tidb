@@ -14,6 +14,9 @@
 
 package types
 
+/**
+decimal类型的单元测试用例文件。
+*/
 import (
 	"encoding/json"
 	"fmt"
@@ -24,7 +27,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+/*
+*
+测试从int类型构造decimal类型。
+*/
 func TestFromInt(t *testing.T) {
+	/**
+	tests是一个特定类型的struct数组，此处tests被定义的同时被初始化。
+	*/
 	tests := []struct {
 		input  int64
 		output string
@@ -33,11 +43,11 @@ func TestFromInt(t *testing.T) {
 		{-1, "-1"},
 		{1, "1"},
 		{-9223372036854775807, "-9223372036854775807"},
-		{-9223372036854775808, "-9223372036854775808"},
+		{-9223372036854775808, "-9223372036854775808"}, //int32的最小值。
 	}
 	for _, tt := range tests {
-		dec := NewDecFromInt(tt.input)
-		str := dec.ToString()
+		dec := NewDecFromInt(tt.input) //从int64类型构造decimal类型。
+		str := dec.ToString()          //decimal类型构造字符串形式的输出。
 		require.Equal(t, tt.output, string(str))
 	}
 }
@@ -59,6 +69,10 @@ func TestFromUint(t *testing.T) {
 	}
 }
 
+/*
+*
+测试decimal转换成int类型。
+*/
 func TestToInt(t *testing.T) {
 	tests := []struct {
 		input  string
@@ -546,6 +560,10 @@ func TestCompareMyDecimal(t *testing.T) {
 	}
 }
 
+/*
+*
+测试decimal最大值。
+*/
 func TestMaxDecimal(t *testing.T) {
 	type tcase struct {
 		prec   int

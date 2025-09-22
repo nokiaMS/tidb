@@ -43,13 +43,30 @@ const (
 	ten8 = 100000000
 	ten9 = 1000000000
 
+	/**
+	一个decimal最多有9个word。
+	*/
 	maxWordBufLen = 9 // A MyDecimal holds 9 words.
+
+	/**
+	每个word由9个digit组成。
+	*/
 	digitsPerWord = 9 // A word holds 9 digits.
-	wordSize      = 4 // A word is 4 bytes int32.
-	digMask       = ten8
-	wordBase      = ten9
-	wordMax       = wordBase - 1
-	notFixedDec   = 31
+
+	/**
+	每个word占用4个字节，是一个int32的值。
+	*/
+	wordSize = 4 // A word is 4 bytes int32.
+
+	digMask  = ten8
+	wordBase = ten9
+
+	/**
+	每个word的最大值。
+	*/
+	wordMax = wordBase - 1
+
+	notFixedDec = 31
 
 	// Round up to the next integer if positive or down to the next integer if negative.
 	ModeHalfUp RoundMode = 5
@@ -97,6 +114,8 @@ var (
 		13, 13, 13, 13, 13, 13, 13, 13, 13,
 		14, 14,
 	}
+
+	//10的n次方。
 	powers10  = [10]int32{ten0, ten1, ten2, ten3, ten4, ten5, ten6, ten7, ten8, ten9}
 	dig2bytes = [10]int{0, 1, 1, 2, 2, 3, 3, 4, 4, 4}
 	fracMax   = [8]int32{
@@ -109,8 +128,11 @@ var (
 		999999900,
 		999999990,
 	}
+
+	//decimal的零值表示。
 	zeroMyDecimal = MyDecimal{}
-	pow10off81    = [...]float64{1e-81, 1e-80, 1e-79, 1e-78, 1e-77, 1e-76, 1e-75, 1e-74, 1e-73, 1e-72, 1e-71, 1e-70, 1e-69, 1e-68, 1e-67, 1e-66, 1e-65, 1e-64, 1e-63, 1e-62, 1e-61, 1e-60, 1e-59, 1e-58, 1e-57, 1e-56, 1e-55, 1e-54, 1e-53, 1e-52, 1e-51, 1e-50, 1e-49, 1e-48, 1e-47, 1e-46, 1e-45, 1e-44, 1e-43, 1e-42, 1e-41, 1e-40, 1e-39, 1e-38, 1e-37, 1e-36, 1e-35, 1e-34, 1e-33, 1e-32, 1e-31, 1e-30, 1e-29, 1e-28, 1e-27, 1e-26, 1e-25, 1e-24, 1e-23, 1e-22, 1e-21, 1e-20, 1e-19, 1e-18, 1e-17, 1e-16, 1e-15, 1e-14, 1e-13, 1e-12, 1e-11, 1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19, 1e20, 1e21, 1e22, 1e23, 1e24, 1e25, 1e26, 1e27, 1e28, 1e29, 1e30, 1e31, 1e32, 1e33, 1e34, 1e35, 1e36, 1e37, 1e38, 1e39, 1e40, 1e41, 1e42, 1e43, 1e44, 1e45, 1e46, 1e47, 1e48, 1e49, 1e50, 1e51, 1e52, 1e53, 1e54, 1e55, 1e56, 1e57, 1e58, 1e59, 1e60, 1e61, 1e62, 1e63, 1e64, 1e65, 1e66, 1e67, 1e68, 1e69, 1e70, 1e71, 1e72, 1e73, 1e74, 1e75, 1e76, 1e77, 1e78, 1e79, 1e80, 1e81}
+
+	pow10off81 = [...]float64{1e-81, 1e-80, 1e-79, 1e-78, 1e-77, 1e-76, 1e-75, 1e-74, 1e-73, 1e-72, 1e-71, 1e-70, 1e-69, 1e-68, 1e-67, 1e-66, 1e-65, 1e-64, 1e-63, 1e-62, 1e-61, 1e-60, 1e-59, 1e-58, 1e-57, 1e-56, 1e-55, 1e-54, 1e-53, 1e-52, 1e-51, 1e-50, 1e-49, 1e-48, 1e-47, 1e-46, 1e-45, 1e-44, 1e-43, 1e-42, 1e-41, 1e-40, 1e-39, 1e-38, 1e-37, 1e-36, 1e-35, 1e-34, 1e-33, 1e-32, 1e-31, 1e-30, 1e-29, 1e-28, 1e-27, 1e-26, 1e-25, 1e-24, 1e-23, 1e-22, 1e-21, 1e-20, 1e-19, 1e-18, 1e-17, 1e-16, 1e-15, 1e-14, 1e-13, 1e-12, 1e-11, 1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19, 1e20, 1e21, 1e22, 1e23, 1e24, 1e25, 1e26, 1e27, 1e28, 1e29, 1e30, 1e31, 1e32, 1e33, 1e34, 1e35, 1e36, 1e37, 1e38, 1e39, 1e40, 1e41, 1e42, 1e43, 1e44, 1e45, 1e46, 1e47, 1e48, 1e49, 1e50, 1e51, 1e52, 1e53, 1e54, 1e55, 1e56, 1e57, 1e58, 1e59, 1e60, 1e61, 1e62, 1e63, 1e64, 1e65, 1e66, 1e67, 1e68, 1e69, 1e70, 1e71, 1e72, 1e73, 1e74, 1e75, 1e76, 1e77, 1e78, 1e79, 1e80, 1e81}
 )
 
 // get the zero of MyDecimal with the specified result fraction digits
@@ -222,6 +244,7 @@ func countTrailingZeroes(i int, word int32) int {
 	return trailing
 }
 
+// 把数字个数转换成word个数。
 func digitsToWords(digits int) int {
 	if digits+digitsPerWord-1 >= 0 && digits+digitsPerWord-1 < 128 {
 		return div9[digits+digitsPerWord-1]
@@ -234,14 +257,29 @@ const MyDecimalStructSize = 40
 
 // MyDecimal represents a decimal value.
 type MyDecimal struct {
+	/**
+	decimal整数部分的digit个数。
+	*/
 	digitsInt int8 // the number of *decimal* digits before the point.
 
+	/**
+	decimal小数部分的digit个数。
+	*/
 	digitsFrac int8 // the number of decimal digits after the point.
 
 	resultFrac int8 // result fraction digits.
 
+	/**
+	decimal数值的符号位。
+	false - 正数
+	true - 负数
+	*/
 	negative bool
 
+	/**
+	decimal用int32数组来存储数值，每9个数字用一个int32值来进行存储。
+	因此，一个word大于等于0，小于等于wordBase即2的10次方。
+	*/
 	//  wordBuf is an array of int32 words.
 	// A word is an int32 value can hold 9 digits.(0 <= word < wordBase)
 	wordBuf [maxWordBufLen]int32
@@ -308,6 +346,9 @@ func (d *MyDecimal) removeTrailingZeros() (lastWordIdx int, digitsFrac int) {
 	return
 }
 
+/**
+decimal转换为字符串形式。
+*/
 // ToString converts decimal to its printable string representation without rounding.
 //
 //	RETURN VALUE
@@ -391,18 +432,26 @@ func (d *MyDecimal) ToString() (str []byte) {
 	return
 }
 
+/**
+把字符串转换成decimal。
+*/
 // FromString parses decimal from string.
 func (d *MyDecimal) FromString(str []byte) error {
+	//去掉左边空白符。
 	for i := range str {
 		if !isSpace(str[i]) {
 			str = str[i:]
 			break
 		}
 	}
+
+	//如果字符串长度为0,那么返回空decimal并报错。
 	if len(str) == 0 {
 		*d = zeroMyDecimal
 		return ErrTruncatedWrongVal.GenWithStackByArgs("DECIMAL", str)
 	}
+
+	//处理符号位。
 	switch str[0] {
 	case '-':
 		d.negative = true
@@ -410,27 +459,37 @@ func (d *MyDecimal) FromString(str []byte) error {
 	case '+':
 		str = str[1:]
 	}
+
+	//获得整数部分长度。
 	var strIdx int
 	for strIdx < len(str) && isDigit(str[strIdx]) {
 		strIdx++
 	}
 	digitsInt := strIdx
+
 	var digitsFrac int
 	var endIdx int
 	if strIdx < len(str) && str[strIdx] == '.' {
+		//处理字符串的小数部分。
 		endIdx = strIdx + 1
 		for endIdx < len(str) && isDigit(str[endIdx]) {
 			endIdx++
 		}
+		//计算小数部分的数字长度。
 		digitsFrac = endIdx - strIdx - 1
 	} else {
+		//处理没有小数部分的情况。
 		digitsFrac = 0
 		endIdx = strIdx
 	}
+
+	//处理空decimal的情况。
 	if digitsInt+digitsFrac == 0 {
 		*d = zeroMyDecimal
 		return ErrTruncatedWrongVal.GenWithStackByArgs("DECIMAL", str)
 	}
+
+	//计算整数和小数部分占用的word数量。
 	wordsInt := digitsToWords(digitsInt)
 	wordsFrac := digitsToWords(digitsFrac)
 	wordsInt, wordsFrac, err := fixWordCntError(wordsInt, wordsFrac)
@@ -440,6 +499,8 @@ func (d *MyDecimal) FromString(str []byte) error {
 			digitsInt = wordsInt * digitsPerWord
 		}
 	}
+
+	//设置整数部分及小数部分的数字个数。
 	d.digitsInt = int8(digitsInt)
 	d.digitsFrac = int8(digitsFrac)
 	wordIdx := wordsInt
@@ -982,9 +1043,14 @@ func (d *MyDecimal) Round(to *MyDecimal, frac int, roundMode RoundMode) (err err
 	return
 }
 
+/**
+int转换为decimal。
+*/
 // FromInt sets the decimal value from int64.
 func (d *MyDecimal) FromInt(val int64) *MyDecimal {
 	var uVal uint64
+
+	//设置decimal的符号位字段，如果值为负数，那么转换为正数。
 	if val < 0 {
 		d.negative = true
 		uVal = uint64(-val)
@@ -994,15 +1060,24 @@ func (d *MyDecimal) FromInt(val int64) *MyDecimal {
 	return d.FromUint(uVal)
 }
 
+/**
+uint转换为decimal。
+*/
 // FromUint sets the decimal value from uint64.
 func (d *MyDecimal) FromUint(val uint64) *MyDecimal {
 	x := val
 	wordIdx := 1
+
+	//x的值表示需要多少个word来存储这个值。
 	for x >= wordBase {
 		wordIdx++
 		x /= wordBase
 	}
+
+	//参数是整数，所以decimal的小数部分设置为0.
 	d.digitsFrac = 0
+
+	//计算整数部分的digits个数。
 	d.digitsInt = int8(wordIdx * digitsPerWord)
 	x = val
 	for wordIdx > 0 {
@@ -1014,10 +1089,15 @@ func (d *MyDecimal) FromUint(val uint64) *MyDecimal {
 	return d
 }
 
+/**
+decimal转换为int。
+*/
 // ToInt returns int part of the decimal, returns the result and errcode.
 func (d *MyDecimal) ToInt() (int64, error) {
+	//声明后如果没有初始化，则默认值为0.
 	var x int64
 	wordIdx := 0
+
 	for i := d.digitsInt; i > 0; i -= digitsPerWord {
 		y := x
 		/*
@@ -1026,6 +1106,9 @@ func (d *MyDecimal) ToInt() (int64, error) {
 		   because |LONGLONG_MIN| > LONGLONG_MAX
 		   so we can convert -9223372036854775808 correctly
 		*/
+		/**
+		从数字的最左边开始计算。x是按照负值进行计算的。每次循环左移。
+		*/
 		x = x*wordBase - int64(d.wordBuf[wordIdx])
 		wordIdx++
 		if y < math.MinInt64/wordBase || x > y {
@@ -1033,19 +1116,25 @@ func (d *MyDecimal) ToInt() (int64, error) {
 			   the decimal is bigger than any possible integer
 			   return border integer depending on the sign
 			*/
+			//已经溢出了，那么返回最小值或者最大值。
 			if d.negative {
 				return math.MinInt64, ErrOverflow
 			}
 			return math.MaxInt64, ErrOverflow
 		}
 	}
+
+	//如果x是int64的最小值，且标志为为负数，那么返回int64最大值，且报溢出错误。
 	/* boundary case: 9223372036854775808 */
 	if !d.negative && x == math.MinInt64 {
 		return math.MaxInt64, ErrOverflow
 	}
+
+	//如果x是负数，那么对x的值取反。
 	if !d.negative {
 		x = -x
 	}
+
 	for i := d.digitsFrac; i > 0; i -= digitsPerWord {
 		if d.wordBuf[wordIdx] != 0 {
 			return x, ErrTruncated
@@ -1055,6 +1144,9 @@ func (d *MyDecimal) ToInt() (int64, error) {
 	return x, nil
 }
 
+/**
+decimal转换为uint。
+*/
 // ToUint returns int part of the decimal, returns the result and errcode.
 func (d *MyDecimal) ToUint() (uint64, error) {
 	if d.negative {
@@ -1902,6 +1994,10 @@ func doAdd(from1, from2, to *MyDecimal) error {
 	return err
 }
 
+/*
+*
+给定精度和标度，返回最大的decimal值。
+*/
 func maxDecimal(precision, frac int, to *MyDecimal) {
 	digitsInt := precision - frac
 	to.negative = false
@@ -2378,16 +2474,25 @@ func DecimalPeak(b []byte) (int, error) {
 	return binSize + 2, nil
 }
 
+/**
+int转换为decimal，仅用于测试。
+*/
 // NewDecFromInt creates a MyDecimal from int.
 func NewDecFromInt(i int64) *MyDecimal {
 	return new(MyDecimal).FromInt(i)
 }
 
+/**
+从uint转换为decimal，仅用于测试。
+*/
 // NewDecFromUint creates a MyDecimal from uint.
 func NewDecFromUint(i uint64) *MyDecimal {
 	return new(MyDecimal).FromUint(i)
 }
 
+/**
+float64转换为decimal，仅用于测试。
+*/
 // NewDecFromFloatForTest creates a MyDecimal from float, as it returns no error, it should only be used in test.
 func NewDecFromFloatForTest(f float64) *MyDecimal {
 	dec := new(MyDecimal)
@@ -2398,6 +2503,9 @@ func NewDecFromFloatForTest(f float64) *MyDecimal {
 	return dec
 }
 
+/**
+字符串转换为decimal，仅用于测试。
+*/
 // NewDecFromStringForTest creates a MyDecimal from string, as it returns no error, it should only be used in test.
 func NewDecFromStringForTest(s string) *MyDecimal {
 	dec := new(MyDecimal)
@@ -2408,6 +2516,9 @@ func NewDecFromStringForTest(s string) *MyDecimal {
 	return dec
 }
 
+/**
+返回给定精度的最大或者最小值。
+*/
 // NewMaxOrMinDec returns the max or min value decimal for given precision and fraction.
 func NewMaxOrMinDec(negative bool, prec, frac int) *MyDecimal {
 	str := make([]byte, prec+2)
