@@ -60,8 +60,9 @@ var (
 )
 
 // Histogram represents statistics for a column or index.
-// 一个列或者索引的直方图。
+// 一个列或者索引的直方图结构。
 type Histogram struct {
+	//直方图对应的列的类型信息。
 	Tp *types.FieldType
 
 	// Histogram elements.
@@ -78,10 +79,18 @@ type Histogram struct {
 
 	// Used for estimating fraction of the interval [lower, upper] that lies within the [lower, value].
 	// For some types like `Int`, we do not build it because we can get them directly from `Bounds`.
-	Scalars   []scalar
-	ID        int64 // Column ID.
-	NDV       int64 // Number of distinct values. Note that It contains the NDV of the TopN which is excluded from histogram.
+	Scalars []scalar
+
+	//直方图对应的列的id。
+	ID int64 // Column ID.
+
+	//列的唯一值数量。
+	NDV int64 // Number of distinct values. Note that It contains the NDV of the TopN which is excluded from histogram.
+
+	//null值数量。
 	NullCount int64 // Number of null values.
+
+	//直方图最后更新的时间戳。
 	// LastUpdateVersion is the version that this histogram updated last time.
 	LastUpdateVersion uint64
 

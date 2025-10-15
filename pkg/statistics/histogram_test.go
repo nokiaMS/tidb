@@ -63,6 +63,10 @@ type topN4Test struct {
 	count int64
 }
 
+/*
+*
+生成直方图。
+*/
 func genHist4Test(t *testing.T, buckets []*bucket4Test, totColSize int64) *Histogram {
 	h := NewHistogram(0, 0, 0, 0, types.NewFieldType(mysql.TypeBlob), len(buckets), totColSize)
 	for _, bucket := range buckets {
