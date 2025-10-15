@@ -30,6 +30,13 @@ import (
 	"github.com/pingcap/tidb/pkg/util/intest"
 )
 
+/**
+逻辑优化规则-谓词化简。
+谓词化简合并一个列上的不同谓词及其等价类。
+    1. 合并in列表与不等式。
+    2. 对空OR分支进行剪枝，移除重复分支。
+    3. 常量化简与折叠。
+*/
 // PredicateSimplification consolidates different predcicates on a column and its equivalence classes.  Initial out is for
 //  1. in-list and not equal list intersection.
 //  2. Drop OR predicates if they are empty for this pattern: P AND (P1 OR P2 ... OR Pn)
@@ -40,6 +47,23 @@ type PredicateSimplification struct {
 
 type predicateType = byte
 
+/*
+*
+各种谓词的枚举值：
+
+		in列表，
+	    不等于，
+	    等于，
+	    小于，
+	    大于，
+	    小于等于，
+	    大于等于，
+	    or,
+	    and,
+		标量谓词
+	    false/true,
+	    其他
+*/
 const (
 	inListPredicate predicateType = iota
 	notEqualPredicate
@@ -57,15 +81,29 @@ const (
 	otherPredicate
 )
 
+/*
+*
+推断常量表达式的谓词类型：
+ 1. 如果为null，返回falsePredicate；
+ 2. 如果为false，返回falsePredicate；如果为true，返回TruePredicate；
+ 3. 其余情况返回otherPredicate；
+*/
 func logicalConstant(bc base.PlanContext, cond expression.Expression) predicateType {
 	sc := bc.GetSessionVars().StmtCtx
+
+	//从表达式中获得常量，如果获取失败，则谓词为otherPredicate
 	con, ok := cond.(*expression.Constant)
 	if !ok {
 		return otherPredicate
 	}
+
+	//判断如果启用了planCache的话是否会引起过优化，true，会；false，不会；当会引起过优化的时候，谓词类型为otherPredicate
 	if expression.MaybeOverOptimized4PlanCache(bc.GetExprCtx(), con) {
 		return otherPredicate
 	}
+
+	//如果常量为null或者false，则类型谓词为falsePredicate
+	//如果常量为true，则谓词类型为TruePredicate
 	if con.Value.IsNull() {
 		return falsePredicate
 	}
@@ -76,9 +114,14 @@ func logicalConstant(bc base.PlanContext, cond expression.Expression) predicateT
 		}
 		return TruePredicate
 	}
+
+	//不符合上面的逻辑的其余情况，返回otherPredicate
 	return otherPredicate
 }
 
+/**
+获取表达式类型。
+*/
 // FindPredicateType determines the type of predicate represented by a given expression.
 // It analyzes the provided expression and returns a column (if applicable) and a corresponding predicate type.
 // The function handles different expression types, including constants, scalar functions, and their specific cases:
@@ -88,8 +131,10 @@ func logicalConstant(bc base.PlanContext, cond expression.Expression) predicateT
 // If the expression doesn't match any of these recognized patterns, it returns an `otherPredicate` type.
 func FindPredicateType(bc base.PlanContext, expr expression.Expression) (*expression.Column, predicateType) {
 	switch v := expr.(type) {
+	//推断常量表达式的谓词类型。
 	case *expression.Constant:
 		return nil, logicalConstant(bc, expr)
+	//推断标量函数的谓词类型。
 	case *expression.ScalarFunction:
 		if v.FuncName.L == ast.LogicOr {
 			return nil, orPredicate
@@ -136,8 +181,13 @@ func FindPredicateType(bc base.PlanContext, expr expression.Expression) (*expres
 	}
 }
 
+/**
+重载接口。
+p:原始逻辑计划。
+*/
 // Optimize implements base.LogicalOptRule.<0th> interface.
 func (*PredicateSimplification) Optimize(_ context.Context, p base.LogicalPlan, opt *optimizetrace.LogicalOptimizeOp) (base.LogicalPlan, bool, error) {
+	//执行计划是否被修改,false没有变化，true有变化。
 	planChanged := false
 	return p.PredicateSimplification(opt), planChanged, nil
 }
@@ -326,6 +376,13 @@ func unsatisfiable(ctx base.PlanContext, p1, p2 expression.Expression) bool {
 	return false
 }
 
+/*
+*
+判断谓词是否为比较谓词，如果是比较谓词，则返回scalarPredicate。
+
+	    比较谓词包括如下内容：
+			=，<,>,<=,>=
+*/
 func comparisonPred(predType predicateType) predicateType {
 	if predType == equalPredicate || predType == lessThanPredicate ||
 		predType == greaterThanPredicate || predType == lessThanOrEqualPredicate ||
@@ -335,6 +392,10 @@ func comparisonPred(predType predicateType) predicateType {
 	return predType
 }
 
+/**
+OR谓词化简：
+    如果OR表达式中，已经确定某个元素是false或者空，那么可以直接把这个子表达式从OR表达式中去掉。
+*/
 // updateOrPredicate simplifies OR predicates by dropping OR predicates if they are empty.
 // It is applied for this pattern: P AND (P1 OR P2 ... OR Pn)
 // Pi is removed if P & Pi is false/empty.
@@ -342,6 +403,8 @@ func updateOrPredicate(ctx base.PlanContext, orPredicateList expression.Expressi
 	_, orPredicateType := FindPredicateType(ctx, orPredicateList)
 	_, scalarPredicateType := FindPredicateType(ctx, scalarPredicatePtr)
 	scalarPredicateType = comparisonPred(scalarPredicateType)
+
+	//如果不是or谓词或者
 	if orPredicateType != orPredicate || scalarPredicateType != scalarPredicate {
 		return orPredicateList
 	}

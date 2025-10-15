@@ -86,6 +86,10 @@ var (
 	// note this two list will differ when some trade-off rules is moved out of norm phase for cascades.
 )
 
+/*
+*
+逻辑优化规则列表。
+*/
 var optRuleList = []base.LogicalOptRule{
 	&GcSubstituter{},
 	&rule.ColumnPruner{},
@@ -339,10 +343,16 @@ func CascadesOptimize(ctx context.Context, sctx base.PlanContext, flag uint64, l
 	return logic, finalPlan, cost, nil
 }
 
+/**
+火山模型优化器，分为两个阶段，一个是逻辑优化，一个是物理优化。
+同时返回逻辑执行计划和物理执行计划。
+*/
 // VolcanoOptimize includes: logicalOptimize, physicalOptimize
 func VolcanoOptimize(ctx context.Context, sctx base.PlanContext, flag uint64, logic base.LogicalPlan) (base.LogicalPlan, base.PhysicalPlan, float64, error) {
 	sessVars := sctx.GetSessionVars()
 	flag = adjustOptimizationFlags(flag, logic)
+
+	//执行逻辑优化。
 	logic, err := logicalOptimize(ctx, flag, logic)
 	if err != nil {
 		return nil, nil, 0, err
@@ -354,6 +364,8 @@ func VolcanoOptimize(ctx context.Context, sctx base.PlanContext, flag uint64, lo
 	if planCounter == 0 {
 		planCounter = -1
 	}
+
+	//基于逻辑优化的结果执行物理优化。
 	physical, cost, err := physicalOptimize(logic, &planCounter)
 	if err != nil {
 		return nil, nil, 0, err
@@ -1065,6 +1077,10 @@ func normalizeOptimize(ctx context.Context, flag uint64, logic base.LogicalPlan)
 	return logic, err
 }
 
+/*
+*
+逻辑优化。
+*/
 func logicalOptimize(ctx context.Context, flag uint64, logic base.LogicalPlan) (base.LogicalPlan, error) {
 	if logic.SCtx().GetSessionVars().StmtCtx.EnableOptimizerDebugTrace {
 		debugtrace.EnterContextCommon(logic.SCtx())
@@ -1084,6 +1100,8 @@ func logicalOptimize(ctx context.Context, flag uint64, logic base.LogicalPlan) (
 	}
 	var err error
 	var againRuleList []base.LogicalOptRule
+
+	//遍历逻辑优化规则表，执行每条逻辑优化规则对plan进行优化。
 	for i, rule := range logicalRuleList {
 		// The order of flags is same as the order of optRule in the list.
 		// We use a bitmask to record which opt rules should be used. If the i-th bit is 1, it means we should

@@ -60,6 +60,7 @@ var (
 )
 
 // Histogram represents statistics for a column or index.
+// 一个列或者索引的直方图。
 type Histogram struct {
 	Tp *types.FieldType
 

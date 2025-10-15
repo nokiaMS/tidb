@@ -20,6 +20,9 @@ import (
 	"github.com/pingcap/tidb/pkg/planner/util/optimizetrace"
 )
 
+/**
+逻辑优化规则接口。
+*/
 // LogicalOptRule means a logical optimizing rule, which contains de-correlate, ppd, column pruning, etc.
 type LogicalOptRule interface {
 	// Optimize return parameters:
