@@ -1140,11 +1140,17 @@ func isLogicalRuleDisabled(r base.LogicalOptRule) bool {
 	return disabled
 }
 
+/*
+*
+物理优化。
+*/
 func physicalOptimize(logic base.LogicalPlan, planCounter *base.PlanCounterTp) (plan base.PhysicalPlan, cost float64, err error) {
 	if logic.SCtx().GetSessionVars().StmtCtx.EnableOptimizerDebugTrace {
 		debugtrace.EnterContextCommon(logic.SCtx())
 		defer debugtrace.LeaveContextCommon(logic.SCtx())
 	}
+
+	//递归计算并保存每一个逻辑算子的统计信息。
 	if _, _, err := logic.RecursiveDeriveStats(nil); err != nil {
 		return nil, 0, err
 	}
@@ -1177,6 +1183,8 @@ func physicalOptimize(logic base.LogicalPlan, planCounter *base.PlanCounterTp) (
 	}
 
 	logic.SCtx().GetSessionVars().StmtCtx.TaskMapBakTS = 0
+
+	//获取最优的物理执行计划。
 	t, _, err := logic.FindBestTask(prop, planCounter, opt)
 	if err != nil {
 		return nil, 0, err

@@ -234,7 +234,9 @@ func (p *BaseLogicalPlan) RecursiveDeriveStats(colGroups [][]*expression.Column)
 		childStats[i] = childProfile
 		childSchema[i] = child.Schema()
 	}
+
 	// when the child has reloaded their stats, current logical operator should reload itself too.
+	//当前操作符的所有子节点都更新了统计信息之后，更新当前操作符的统计信息。
 	return p.self.DeriveStats(childStats, p.self.Schema(), childSchema, reloads)
 }
 
