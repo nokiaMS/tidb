@@ -442,7 +442,7 @@ func handleAnalyzeFullSamplingReq(
 		ColGroups:       colGroups,
 		MaxSampleSize:   int(colReq.SampleSize),
 		MaxFMSketchSize: int(colReq.SketchSize),
-		SampleRate:      colReq.GetSampleRate(),
+		SampleRate:      colReq.GetSampleRate(), // SampleRate仅用于全采样，且不允许用户设置，所以直接从请求里获取。其默认值为0，表示全采样。所谓全采样，即不对数据进行采样，直接将所有数据都添加到SampleBuilder中。
 		Rng:             rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 	collector, err := builder.Collect()

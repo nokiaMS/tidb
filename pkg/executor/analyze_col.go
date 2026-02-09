@@ -138,6 +138,7 @@ func (e *AnalyzeColumnsExec) buildResp(ranges []*ranger.Range) (distsql.SelectRe
 	return result, nil
 }
 
+// 此函数作用是构建统计信息，返回直方图、CMSketch、TopN、FMSketch和扩展统计信息。
 func (e *AnalyzeColumnsExec) buildStats(ranges []*ranger.Range, needExtStats bool) (hists []*statistics.Histogram, cms []*statistics.CMSketch, topNs []*statistics.TopN, fms []*statistics.FMSketch, extStats *statistics.ExtendedStatsColl, err error) {
 	if err = e.open(ranges); err != nil {
 		return nil, nil, nil, nil, nil, err
@@ -321,7 +322,7 @@ func (e *AnalyzeColumnsExecV1) analyzeColumnsPushDownV1() *statistics.AnalyzeRes
 		ranges = ranger.FullIntRange(false)
 	}
 	collExtStats := e.ctx.GetSessionVars().EnableExtendedStats
-	hists, cms, topNs, fms, extStats, err := e.buildStats(ranges, collExtStats)
+	hists, cms, topNs, fms, extStats, err := e.buildStats(ranges, collExtStats) //此行功能是构建统计信息，返回直方图、CMSketch、TopN、FMSketch和扩展统计信息。
 	if err != nil {
 		return &statistics.AnalyzeResults{Err: err, Job: e.job}
 	}

@@ -75,6 +75,9 @@ var (
 
 	// MaxRegionSampleSize is the max sample size for one region when analyze v1 collects samples from table.
 	// It's public for test.
+	/**
+	此变量用于限制在分析过程中从单个区域收集的最大样本数量，以防止过多的数据集中在单个区域，影响统计结果的准确性和性能。
+	*/
 	MaxRegionSampleSize = int64(1000)
 )
 
@@ -601,6 +604,12 @@ func finishJobWithLog(statsHandle *handle.Handle, job *statistics.AnalyzeJob, an
 	}
 }
 
+/*
+*
+此函数的功能是处理分析结果中的全局统计信息。
+在分析过程中，如果表是分区表，并且需要全局统计信息，那么函数会遍历分析结果中的每个结果项。
+对于每个结果项，如果它不是索引统计信息（IsIndex == 0），则会创建一个全局统计信息的键（globalStatsKey），其中包含表ID和一个特殊的索引ID（-1）来表示这是全局统计信息。
+*/
 func handleGlobalStats(needGlobalStats bool, globalStatsMap globalStatsMap, results *statistics.AnalyzeResults) {
 	if results.TableID.IsPartitionTable() && needGlobalStats {
 		for _, result := range results.Ars {

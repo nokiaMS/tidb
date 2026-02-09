@@ -348,6 +348,12 @@ func TestNormalAnalyzeOnCommonHandle(t *testing.T) {
 		"test t3  c 1 2 3 1 3 3 0"))
 }
 
+/*
+*
+此函数的功能是测试在分析表时，默认的统计信息版本对查询计划的影响。
+首先，它创建了一个测试环境，并设置分析版本为1。然后，它创建了一个包含大量重复值的表，并执行分析操作。
+接下来，它检查查询计划，确保使用了索引扫描，并且统计信息正确反映了数据分布。最后，它清理环境并重复测试以验证稳定性。
+*/
 func TestDefaultValForAnalyze(t *testing.T) {
 	if kerneltype.IsNextGen() {
 		t.Skip("the next-gen kernel does not support analyze version 1")
@@ -356,6 +362,7 @@ func TestDefaultValForAnalyze(t *testing.T) {
 	tk := testkit.NewTestKit(t, store)
 	tk.MustExec("set @@tidb_analyze_version=1")
 	defer tk.MustExec("set @@tidb_analyze_version=2")
+	//此值的作用是控制分析表时采样的最大行数，增加这个值可以确保在构建直方图时收集到所有样本，否则测试可能会不稳定。
 	originalSampleSize := executor.MaxRegionSampleSize
 	// Increase MaxRegionSampleSize to ensure all samples are collected for building histogram, otherwise the test will be unstable.
 	executor.MaxRegionSampleSize = 10000
@@ -376,7 +383,7 @@ func TestDefaultValForAnalyze(t *testing.T) {
 
 	// Default RPC encoding may cause statistics explain result differ and then the test unstable.
 	tk.MustExec("set @@tidb_enable_chunk_rpc = on")
-
+	//设置快速分析功能为关闭，以确保分析表时使用传统的分析方法，避免快速分析可能带来的不稳定因素。
 	tk.MustQuery("select @@tidb_enable_fast_analyze").Check(testkit.Rows("0"))
 	tk.MustQuery("select @@session.tidb_enable_fast_analyze").Check(testkit.Rows("0"))
 	tk.MustExec("analyze table t with 0 topn, 2 buckets, 10000 samples")
