@@ -60,6 +60,7 @@ type RangeWorker struct {
 	totalPercentage     float64
 	totalPercentageStep float64
 
+	//统计信息加载并行度。
 	concurrency int
 	wg          util.WaitGroupWrapper
 }
@@ -90,6 +91,9 @@ func NewRangeWorker(
 	return worker
 }
 
+/**
+并行加载统计信息。
+*/
 // LoadStats loads stats concurrently when to init stats
 func (ls *RangeWorker) LoadStats() {
 	for range ls.concurrency {
@@ -99,7 +103,12 @@ func (ls *RangeWorker) LoadStats() {
 	}
 }
 
+/*
+*
+统计信息加载函数。
+*/
 func (ls *RangeWorker) loadStats() {
+	//遍历处理传递近来的task。
 	for task := range ls.taskChan {
 		if err := ls.processTask(task); err != nil {
 			logutil.BgLogger().Error("load stats failed", zap.Error(err))
@@ -113,11 +122,17 @@ func (ls *RangeWorker) loadStats() {
 	}
 }
 
+/**
+给统计信息收集worker发送task。
+*/
 // SendTask sends a task to the load stats worker.
 func (ls *RangeWorker) SendTask(task Task) {
 	ls.taskChan <- task
 }
 
+/**
+关闭统计信息收集worker。
+*/
 // Wait closes the load stats worker.
 func (ls *RangeWorker) Wait() {
 	close(ls.taskChan)

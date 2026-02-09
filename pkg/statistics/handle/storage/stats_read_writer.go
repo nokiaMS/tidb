@@ -170,6 +170,9 @@ func (s *statsReadWriter) SaveAnalyzeResultToStorage(results *statistics.Analyze
 	return err
 }
 
+/**
+从mysql.stats_meta表中读取指定表id的表统计元信息count与modifyCount，count表示表的总行数，modifyCount表示表的修改的行数。
+*/
 // StatsMetaCountAndModifyCount reads count and modify_count for the given table from mysql.stats_meta.
 func (s *statsReadWriter) StatsMetaCountAndModifyCount(tableID int64) (count, modifyCount int64, err error) {
 	err = util.CallWithSCtx(s.statsHandler.SPool(), func(sctx sessionctx.Context) error {

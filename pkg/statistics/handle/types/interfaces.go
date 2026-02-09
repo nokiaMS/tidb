@@ -340,6 +340,7 @@ type StatsReadWriter interface {
 	// LoadTablePartitionStats loads partition stats info from storage.
 	LoadTablePartitionStats(tableInfo *model.TableInfo, partitionDef *model.PartitionDefinition) (*statistics.Table, error)
 
+	//给定表id，返回表的统计信息：总行数与修改的行数。
 	// StatsMetaCountAndModifyCount reads count and modify_count for the given table from mysql.stats_meta.
 	StatsMetaCountAndModifyCount(tableID int64) (count, modifyCount int64, err error)
 

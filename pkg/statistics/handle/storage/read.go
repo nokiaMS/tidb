@@ -43,6 +43,9 @@ import (
 	"go.uber.org/zap"
 )
 
+/**
+根据表id获得表的统计元信息：总行数，修改的行数。
+*/
 // StatsMetaCountAndModifyCount reads count and modify_count for the given table from mysql.stats_meta.
 func StatsMetaCountAndModifyCount(
 	ctx context.Context,
@@ -52,6 +55,10 @@ func StatsMetaCountAndModifyCount(
 	return statsMetaCountAndModifyCount(ctx, sctx, tableID, false)
 }
 
+/**
+根据表id获得表的统计元信息：总行数与修改的行数。
+因为有for update，所以会在查询过程中锁定数据行，直到事物结束。
+*/
 // StatsMetaCountAndModifyCountForUpdate reads count and modify_count for the given table from mysql.stats_meta with lock.
 func StatsMetaCountAndModifyCountForUpdate(
 	ctx context.Context,
@@ -61,6 +68,15 @@ func StatsMetaCountAndModifyCountForUpdate(
 	return statsMetaCountAndModifyCount(ctx, sctx, tableID, true)
 }
 
+/*
+*
+根据表id获得表的统计元信息：总行数，变更的行数。
+返回值：
+
+	count:总行数
+	modifyCount:修改的行数
+	isNull:结果是否为空
+*/
 func statsMetaCountAndModifyCount(
 	ctx context.Context,
 	sctx sessionctx.Context,
@@ -205,6 +221,13 @@ func CMSketchFromStorage(sctx sessionctx.Context, tblID int64, isIndex int, hist
 	return statistics.DecodeCMSketch(rows[0].GetBytes(0))
 }
 
+/**
+从统计信息表中获取topN信息。
+参数：
+	tbkID - 表id。
+	isIndex - 是否是索引。
+	hisID - 直方图id。
+*/
 // TopNFromStorage reads TopN from storage
 func TopNFromStorage(sctx sessionctx.Context, tblID int64, isIndex int, histID int64) (_ *statistics.TopN, err error) {
 	rows, _, err := util.ExecRows(sctx, "select HIGH_PRIORITY value, count from mysql.stats_top_n where table_id = %? and is_index = %? and hist_id = %?", tblID, isIndex, histID)

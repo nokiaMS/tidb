@@ -20,6 +20,9 @@ import (
 	"github.com/pingcap/tidb/pkg/config"
 )
 
+/**
+返回加载统计信息时的并发度(占用多少个cpu核)。
+*/
 // GetConcurrency gets the concurrency of loading stats.
 // the concurrency is from 2 to 16.
 // when Performance.ForceInitStats is true, the concurrency is from 2 to GOMAXPROCS(0)-2.

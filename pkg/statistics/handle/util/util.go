@@ -75,6 +75,9 @@ var (
 	FlagWrapTxn = 0
 )
 
+/**
+分配上下文对象并执行f函数。
+*/
 // CallWithSCtx allocates a sctx from the pool and call the f().
 func CallWithSCtx(pool util.DestroyableSessionPool, f func(sctx sessionctx.Context) error, flags ...int) (err error) {
 	defer util.Recover(metrics.LabelStats, "CallWithSCtx", nil, false)
@@ -208,6 +211,9 @@ func WrapTxn(sctx sessionctx.Context, f func(sctx sessionctx.Context) error) (er
 	return
 }
 
+/**
+获得当前事物开始时间戳。
+*/
 // GetStartTS gets the start ts from current transaction.
 func GetStartTS(sctx sessionctx.Context) (uint64, error) {
 	txn, err := sctx.Txn(true)

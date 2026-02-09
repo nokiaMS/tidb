@@ -177,6 +177,9 @@ func NewPseudoHistogram(id int64, tp *types.FieldType) *Histogram {
 	}
 }
 
+/**
+创建一个直方图。
+*/
 // NewHistogram creates a new histogram.
 func NewHistogram(id, ndv, nullCount int64, version uint64, tp *types.FieldType, bucketSize int, totColSize int64) *Histogram {
 	tp = prepareFieldTypeForHistogram(tp)

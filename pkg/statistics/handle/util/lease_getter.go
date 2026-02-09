@@ -20,20 +20,30 @@ import (
 	"go.uber.org/atomic"
 )
 
+/**
+stats lease定义了自动更新任务的执行周期。
+*/
 // LeaseGetter is used to get the stats lease.
 type LeaseGetter interface {
+	//获得stats lease。
 	// Lease returns the stats lease.
 	Lease() time.Duration
+
+	//设置stats lease。
 	// SetLease sets the stats lease. Only used for test.
 	SetLease(lease time.Duration)
 }
 
 var _ LeaseGetter = (*leaseGetter)(nil)
 
+/*
+lease getter对象结构体。
+*/
 type leaseGetter struct {
 	lease *atomic.Duration
 }
 
+// 创建一个新的leaseGetter对象。
 // NewLeaseGetter creates a new LeaseGetter.
 func NewLeaseGetter(lease time.Duration) LeaseGetter {
 	return &leaseGetter{
@@ -41,11 +51,13 @@ func NewLeaseGetter(lease time.Duration) LeaseGetter {
 	}
 }
 
+// 获得stats lease值。
 // Lease implements LeaseGetter.
 func (g *leaseGetter) Lease() time.Duration {
 	return g.lease.Load()
 }
 
+// 设置stats lease值。
 // SetLease sets the stats lease. Only used for test.
 func (g *leaseGetter) SetLease(lease time.Duration) {
 	g.lease.Store(lease)

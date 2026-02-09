@@ -30,9 +30,13 @@ import (
 	statsutil "github.com/pingcap/tidb/pkg/statistics/handle/util"
 )
 
+/**
+更新统计信息时间戳，统计信息的版本号即为所在事物的时间戳。
+*/
 // UpdateStatsVersion will set statistics version to the newest TS, then
 // tidb-server will reload automatic.
 func UpdateStatsVersion(ctx context.Context, sctx sessionctx.Context) error {
+	//获得当前事物时间戳。
 	startTS, err := statsutil.GetStartTS(sctx)
 	if err != nil {
 		return errors.Trace(err)

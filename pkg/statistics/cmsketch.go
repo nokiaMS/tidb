@@ -497,8 +497,12 @@ func (c *CMSketch) CalcDefaultValForAnalyze(ndv uint64) {
 	c.defaultValue = c.count / max(1, ndv)
 }
 
+/*
+存储一个列中最常出现的值，用于进行点查的估算。
+*/
 // TopN stores most-common values, which is used to estimate point queries.
 type TopN struct {
+	//存储topN元信息的数组。
 	TopN []TopNMeta
 
 	totalCount uint64
@@ -507,6 +511,9 @@ type TopN struct {
 	once sync.Once
 }
 
+/*
+添加一个topN元素。
+*/
 // AppendTopN appends a topn into the TopN struct.
 func (c *TopN) AppendTopN(data []byte, count uint64) {
 	if c == nil {
@@ -515,6 +522,9 @@ func (c *TopN) AppendTopN(data []byte, count uint64) {
 	c.TopN = append(c.TopN, TopNMeta{data, count})
 }
 
+/*
+topN结构转为字符串表示。
+*/
 func (c *TopN) String() string {
 	if c == nil {
 		return "EmptyTopN"
@@ -533,6 +543,9 @@ func (c *TopN) String() string {
 	return builder.String()
 }
 
+/*
+返回topN中元素个数。
+*/
 // Num returns the ndv of the TopN.
 //
 //	TopN is declared directly in Histogram. So the Len is occupied by the Histogram. We use Num instead.
@@ -543,6 +556,9 @@ func (c *TopN) Num() int {
 	return len(c.TopN)
 }
 
+/*
+topN结构的字符串化表示。
+*/
 // DecodedString returns the value with decoded result.
 func (c *TopN) DecodedString(ctx sessionctx.Context, colTypes []byte) (string, error) {
 	if c == nil {
@@ -568,6 +584,9 @@ func (c *TopN) DecodedString(ctx sessionctx.Context, colTypes []byte) (string, e
 	return builder.String(), nil
 }
 
+/*
+拷贝topN对象。
+*/
 // Copy makes a copy for current TopN.
 func (c *TopN) Copy() *TopN {
 	if c == nil {
@@ -584,16 +603,24 @@ func (c *TopN) Copy() *TopN {
 	}
 }
 
+/*
+返回topN中具有最小次数的元素的次数值。
+*/
 // MinCount returns the minimum count in the TopN.
 func (c *TopN) MinCount() uint64 {
 	if c == nil || len(c.TopN) == 0 {
 		return 0
 	}
+	//计算min count与total count.
 	c.calculateMinCountAndCount()
 	return c.minCount
 }
 
+/*
+计算topN元素出现的最小的次数与所有元素的总的次数。
+*/
 func (c *TopN) calculateMinCountAndCount() {
+	//测试环境。
 	if intest.InTest {
 		// In test, After the sync.Once is called, topN will not be modified anymore.
 		minCount, totalCount := c.calculateMinCountAndCountInternal()
@@ -602,9 +629,13 @@ func (c *TopN) calculateMinCountAndCount() {
 		intest.Assert(totalCount == c.totalCount, "totalCount should be equal to the calculated totalCount")
 		return
 	}
+	//计算minCount与total count.
 	c.onceCalculateMinCountAndCount()
 }
 
+/*
+计算并返回topN中的最小出现次数元素的数量与所有元素总的出现数量。
+*/
 func (c *TopN) onceCalculateMinCountAndCount() {
 	c.once.Do(func() {
 		// Initialize to the first value in TopN
@@ -614,6 +645,10 @@ func (c *TopN) onceCalculateMinCountAndCount() {
 	})
 }
 
+/*
+*
+返回topN结构中具有最小数量的topN值与所有元素的总数量。
+*/
 func (c *TopN) calculateMinCountAndCountInternal() (minCount, total uint64) {
 	minCount = c.TopN[0].Count
 	for _, t := range c.TopN {
@@ -623,12 +658,21 @@ func (c *TopN) calculateMinCountAndCountInternal() (minCount, total uint64) {
 	return minCount, total
 }
 
+/*
+topN元信息：
+	Encoded - 值。
+	Count - 值出现的次数。
+上述两个信息组成了一个topN元素。
+*/
 // TopNMeta stores the unit of the TopN.
 type TopNMeta struct {
 	Encoded []byte
 	Count   uint64
 }
 
+/*
+给定值，返回topN中此值出现的数量。
+*/
 // QueryTopN returns the results for (h1, h2) in murmur3.Sum128(), if not exists, return (0, false).
 // The input sctx is just for debug trace, you can pass nil safely if that's not needed.
 func (c *TopN) QueryTopN(sctx planctx.PlanContext, d []byte) (result uint64, found bool) {
@@ -652,6 +696,9 @@ func (c *TopN) QueryTopN(sctx planctx.PlanContext, d []byte) (result uint64, fou
 	return c.TopN[idx].Count, true
 }
 
+/*
+查询值在topN中的位置。
+*/
 // FindTopN finds the index of the given value in the TopN.
 func (c *TopN) FindTopN(d []byte) int {
 	if c == nil {
@@ -681,6 +728,9 @@ func (c *TopN) FindTopN(d []byte) int {
 	return idx
 }
 
+/*
+给定一个值，返回topN中不小于此值的元素的位置。
+*/
 // LowerBound searches on the sorted top-n items,
 // returns the smallest index i such that the value at element i is not less than `d`.
 func (c *TopN) LowerBound(d []byte) (idx int, match bool) {
@@ -693,6 +743,9 @@ func (c *TopN) LowerBound(d []byte) (idx int, match bool) {
 	return idx, match
 }
 
+/*
+评估l与r之间的数据行数。(前提是l与r都在topN中。)
+*/
 // BetweenCount estimates the row count for interval [l, r).
 // The input sctx is just for debug trace, you can pass nil safely if that's not needed.
 func (c *TopN) BetweenCount(sctx planctx.PlanContext, l, r []byte) (result uint64) {
@@ -718,6 +771,9 @@ func (c *TopN) BetweenCount(sctx planctx.PlanContext, l, r []byte) (result uint6
 	return ret
 }
 
+/*
+对topN中的元素进行排序。
+*/
 // Sort sorts the topn items.
 func (c *TopN) Sort() {
 	if c == nil {
@@ -728,6 +784,9 @@ func (c *TopN) Sort() {
 	})
 }
 
+/*
+返回topN中存储的数据总数。
+*/
 // TotalCount returns how many data is stored in TopN.
 func (c *TopN) TotalCount() uint64 {
 	if c == nil || len(c.TopN) == 0 {
@@ -737,6 +796,9 @@ func (c *TopN) TotalCount() uint64 {
 	return c.totalCount
 }
 
+/*
+判断两个topN结构是否相等。
+*/
 // Equal checks whether the two TopN are equal.
 func (c *TopN) Equal(cc *TopN) bool {
 	if c.TotalCount() == 0 && cc.TotalCount() == 0 {
@@ -758,6 +820,9 @@ func (c *TopN) Equal(cc *TopN) bool {
 	return true
 }
 
+/*
+返回topN的内存使用。
+*/
 // MemoryUsage returns the total memory usage of a topn.
 func (c *TopN) MemoryUsage() (sum int64) {
 	if c == nil {
@@ -770,16 +835,29 @@ func (c *TopN) MemoryUsage() (sum int64) {
 	return
 }
 
+/*
+创建一个topn对象。
+*/
 // NewTopN creates the new TopN struct by the given size.
 func NewTopN(n int) *TopN {
 	return &TopN{TopN: make([]TopNMeta, 0, n)}
 }
 
+/*
+对多个topN进行合并。
+参数：
+	topNs - 待合并的topN数组。
+	n - 新的topN的数量。
+返回值：
+	新产生的topN对象。
+	排序后未进入topN结构中的topNMeta列表。
+*/
 // MergeTopN is used to merge more TopN structures to generate a new TopN struct by the given size.
 // The input parameters are multiple TopN structures to be merged and the size of the new TopN that will be generated.
 // The output parameters are the newly generated TopN structure and the remaining numbers.
 // Notice: The n can be 0. So n has no default value, we must explicitly specify this value.
 func MergeTopN(topNs []*TopN, n uint32) (*TopN, []TopNMeta) {
+	//处理空topN。
 	if CheckEmptyTopNs(topNs) {
 		return nil, nil
 	}
@@ -805,6 +883,9 @@ func MergeTopN(topNs []*TopN, n uint32) (*TopN, []TopNMeta) {
 	return GetMergedTopNFromSortedSlice(sorted, n)
 }
 
+/*
+检测topn是否为空。
+*/
 // CheckEmptyTopNs checks whether all TopNs are empty.
 func CheckEmptyTopNs(topNs []*TopN) bool {
 	for _, topN := range topNs {
@@ -815,6 +896,9 @@ func CheckEmptyTopNs(topNs []*TopN) bool {
 	return true
 }
 
+/*
+对topN进行排序。
+*/
 // SortTopnMeta sort topnMeta
 func SortTopnMeta(topnMetas []TopNMeta) {
 	slices.SortFunc(topnMetas, func(i, j TopNMeta) int {
@@ -825,6 +909,9 @@ func SortTopnMeta(topnMetas []TopNMeta) {
 	})
 }
 
+/*
+比较两个topNMeta对象。
+*/
 // TopnMetaCompare compare topnMeta
 func TopnMetaCompare(i, j TopNMeta) int {
 	c := cmp.Compare(j.Count, i.Count)
@@ -834,6 +921,9 @@ func TopnMetaCompare(i, j TopNMeta) int {
 	return bytes.Compare(i.Encoded, j.Encoded)
 }
 
+/*
+对排序好的topNMeta数组进行合并，返回新的topN对象及未进入topN对象中的topNMeta。
+*/
 // GetMergedTopNFromSortedSlice returns merged topn
 func GetMergedTopNFromSortedSlice(sorted []TopNMeta, n uint32) (*TopN, []TopNMeta) {
 	SortTopnMeta(sorted)
